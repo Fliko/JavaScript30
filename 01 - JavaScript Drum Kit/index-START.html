@@ -45,8 +45,10 @@
       <kbd>L</kbd>
       <span class="sound">tink</span>
     </div>
+    <button class='recorderOptions' onclick="startRecorder()">record</button>
+    <button class='recorderOptions' onclick="playRecording()">play</button>
   </div>
-
+ 
   <audio data-key="65" src="sounds/clap.wav"></audio>
   <audio data-key="83" src="sounds/hihat.wav"></audio>
   <audio data-key="68" src="sounds/kick.wav"></audio>
@@ -58,7 +60,73 @@
   <audio data-key="76" src="sounds/tink.wav"></audio>
 
 <script>
-
+//start recording
+let recording = false;
+let storage = [];
+let count = 0;
+let timer;
+//controls whether recoding or not
+const startRecorder = function () {
+  recording = !recording;
+  if(recording) {
+    count = 0;
+    timer = setInterval(()=> count++, 1);
+  } else {
+    count = 0;
+    clearInterval(timer);
+  }
+  }
+//remove properties added after playing a sound
+const removeTransition = function (e) {
+  //if has been transformed remove class of playing
+  if(e.propertyName !== 'transform') return;
+  e.target.classList.remove('playing');
+}
+//add class of playing to button with corresponding key
+const playSound = function(e) {
+  //find the div and the audio file associated with key
+  const audio = document.querySelector(`audio[data-key="${e.keyCode}"]`);
+  const key = document.querySelector(`div[data-key="${e.keyCode}"]`);
+  //if random key pressed do nothing
+  if(!audio) return;
+  //add class playing to button on page
+  key.classList.add('playing');
+  //play adio file starting at 0 and if recording record it
+  if(recording) addSound(audio);
+  audio.currentTime = 0;
+  audio.play();
+}
+const addSound = function (audio) {
+  storage.push([audio, count]);
+  console.log(storage);
+}
+const playRecording = function () {
+  if(recording){
+    console.log('STOP RECORDING');
+    return;
+  }
+  count = 0;
+  timer = setInterval(checkForSound,1); 
+}
+const checkForSound = function () {
+  count++;
+  if(storage[0][1] > count - 10 && storage[0][1] < count + 10 ) {
+      storage[0][0].currentTime = 0;
+      storage[0][0].play();
+      storage = storage.slice(1);
+      console.log(storage);
+    }
+  if(storage.length === 0) {
+    clearInterval(timer);
+  }
+}
+//select all .key elements
+const keys = Array.from(document.querySelectorAll('.key'));
+//add transforming event to each key
+//transitionend NOT transitioned ::: transitionend is an event that occurs when an css transition ends duh!!
+keys.forEach(key => key.addEventListener('transitionend', removeTransition));
+//attempt to play a sound whenever a key is pressed
+window.addEventListener('keydown', playSound);
 </script>
 
 
